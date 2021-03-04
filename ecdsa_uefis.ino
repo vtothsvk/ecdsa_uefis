@@ -15,31 +15,33 @@ void setup(void) {
 
     Serial.printf("Blink motherfucker!\r\n");
 
-    char buffer[500];
+    char buffer[600];
     size_t h64_len;
     size_t index;
 
-    Serial.printf("63+1 encode: %d", base64_url((uint8_t*)buffer, sizeof(buffer), &h64_len, (uint8_t*)header, strlen(header)));
+    Serial.printf("63+1 encode: %d\r\n", base64_url((uint8_t*)buffer, sizeof(buffer), &h64_len, (uint8_t*)header, strlen(header)));
 
     buffer[h64_len] = '.';
     size_t c64_len;
     index = h64_len + 1;
-    Serial.printf("63+1 encode: %d", base64_url((uint8_t*)buffer + index, sizeof(buffer) - index, &c64_len, (uint8_t*)claim, strlen(claim)));
+    Serial.printf("63+1 encode: %d\r\n", base64_url((uint8_t*)buffer + index, sizeof(buffer) - index, &c64_len, (uint8_t*)claim, strlen(claim)));
     Serial.printf("output: %s\r\n", buffer);    
 
     index += c64_len;
+    
+
+    uint8_t hash[32];
+    int ret = mbedtls_sha256_ret((uint8_t*)buffer, index, hash, NULL);
+
     buffer[index] = '.';
     index++;
 
-    uint8_t hash[32];
-    int ret = mbedtls_sha256_ret((uint8_t*)buffer, strlen(buffer), hash, NULL);
-
-    char signature[65];
-    ret = ecdsa_sign((uint8_t*)signature, sizeof(signature), hash, 32);
-    Serial.printf("Sign ret: %d", ret);
+    uint8_t signature[64];
+    ret = ecdsa_sign(signature, sizeof(signature), hash, 32);
+    Serial.printf("Sign ret: %d\r\n", ret);
 
     size_t s64_len;
-    Serial.printf("63+1 encode: %d", base64_url((uint8_t*)buffer + index, sizeof(buffer) - index, &s64_len, (uint8_t*)signature, sizeof(signature)));
+    Serial.printf("63+1 encode: %d\r\n", base64_url((uint8_t*)buffer + index, sizeof(buffer) - index, &s64_len, signature, 64));
     Serial.printf("output: %s\r\n", buffer);
 }//setup
 
@@ -94,7 +96,7 @@ int ecdsa_sign(uint8_t* out, size_t o_buff_size, const uint8_t* digest, size_t d
     ret = mbedtls_mpi_write_binary(&r, out, mbedtls_mpi_size(&r));
     if (ret) return ret;
 
-    ret = mbedtls_mpi_write_binary(&s, out + mbedtls_mpi_size(&r), mbedtls_mpi_size(&s));
+    ret = mbedtls_mpi_write_binary(&s, out + 32, mbedtls_mpi_size(&s));
     if(ret) return ret;
 
     mbedtls_pk_free(&pk_ctx);

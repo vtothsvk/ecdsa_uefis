@@ -8,7 +8,7 @@
 #include "mbedtls/ecdsa.h"
 
 int base64_url(uint8_t* out, size_t o_buff_size, size_t* o_len, const uint8_t* in, size_t in_len);
-int ecdsa_sign(uint8_t* out, size_t o_buff_size, const uint8_t* digest, size_t dlen);
+int ecdsa_sign(uint8_t* out, size_t o_buff_size, const uint8_t* digest, size_t dlen, const char* private_key);
 
 void setup(void) {
     Serial.begin(115200);
@@ -72,7 +72,7 @@ int base64_url(uint8_t* out, size_t o_buff_size, size_t* o_len, const uint8_t* i
     return ret;
 }//base64_url
 
-int ecdsa_sign(uint8_t* out, size_t o_buff_size, const uint8_t* digest, size_t dlen){
+int ecdsa_sign(uint8_t* out, size_t o_buff_size, const uint8_t* digest, size_t dlen, const char* private_key) {
 
     mbedtls_pk_context pk_ctx;
 
@@ -96,8 +96,14 @@ int ecdsa_sign(uint8_t* out, size_t o_buff_size, const uint8_t* digest, size_t d
     ret = mbedtls_mpi_write_binary(&r, out, mbedtls_mpi_size(&r));
     if (ret) return ret;
 
-    ret = mbedtls_mpi_write_binary(&s, out + 32, mbedtls_mpi_size(&s));
+    ret = mbedtls_mpi_write_binary(&s, out + mbedtls_mpi_size(&r), mbedtls_mpi_size(&s));
     if(ret) return ret;
+
+    size_t siglen = mbedtls_mpi_size(&r) + mbedtls_mpi_size(&s);
+
+    if(siglen > o_buff_size) {
+        return -1;
+    }
 
     mbedtls_pk_free(&pk_ctx);
     mbedtls_ecdsa_free(&ecdsa);

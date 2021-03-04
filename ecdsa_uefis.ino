@@ -37,7 +37,7 @@ void setup(void) {
     index++;
 
     uint8_t signature[64];
-    ret = ecdsa_sign(signature, sizeof(signature), hash, 32);
+    ret = ecdsa_sign(signature, sizeof(signature), hash, 32, private_key);
     Serial.printf("Sign ret: %d\r\n", ret);
 
     size_t s64_len;

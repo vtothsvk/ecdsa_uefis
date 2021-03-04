@@ -30,7 +30,7 @@ void setup(void) {
     Serial.printf("Hash hex: ");
     for(uint8_t i = 0; i < 32; i++) {
         Serial.printf("%2X", hash[i]);
-    }
+    }//for
     Serial.println();
 
 }//setup
@@ -54,7 +54,7 @@ int base64_url(uint8_t* out, size_t o_buff_size, size_t* o_len , const uint8_t* 
         } else if (out[index] == '=') {
             out[index] = 0;
             e_len = index;
-        }
+        }//if
     }//for (uint8_t index = 0; index < elen; index++)
 
     *o_len = e_len;

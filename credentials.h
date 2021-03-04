@@ -2,7 +2,7 @@
 #define CREDENTIALS_H
 
 const char private_key[] = 
-"PASTE PRIVATE KEY HERE";
+"PASTE PRIVATE KEY HERE"
 
 char header[200] = "{\
   \"alg\": \"ES256\",\

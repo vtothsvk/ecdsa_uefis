@@ -49,6 +49,7 @@ void setup(void) {
       int send_ret = send_to_server(server_name, kid, serial_num, time_iat, time_exp, payload);
       Serial.print("\nSend RET ->");
       Serial.print(send_ret);
+      Serial.print("\n");
       delay(1000);
     }//while
 }//setup

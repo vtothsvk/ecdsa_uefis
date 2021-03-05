@@ -62,42 +62,44 @@ void loop(void) {
 int send_to_server(const char *server_name, char* kid, char* serial_num, int time_iat, int time_exp, char* payload)    
     {
 
+    int err_ret =0;
     char buffer[600];
     size_t h64_len;
     size_t c64_len;
     size_t s64_len;
     size_t index;                                                                                         //JWT Token variables
-
+    
     HTTPClient http;                                                                                      //Initialize HTTP Client
     http.begin(server_name);
 
     char header[200];
-    sprintf(header,"{\"alg\":\"ES256\",\"typ\":\"JWT\",\"kid\":\"%s\"}",kid);                             //Generate header
-    base64_url((uint8_t*)buffer, sizeof(buffer), &h64_len, (uint8_t*)header, strlen(header));             //OK
+    sprintf(header,"{\"alg\":\"ES256\",\"typ\":\"JWT\",\"kid\":\"%s\"}",kid);                             //Generate header base64_url
+    err_ret = base64_url((uint8_t*)buffer, sizeof(buffer), &h64_len, (uint8_t*)header, strlen(header));            
+    if(err_ret) return err_ret;
     
     Serial.printf("63+1 encode: %s\r\n",buffer);
     buffer[h64_len] = '.';
     index = h64_len + 1;
     
     char claim[200];   
-    sprintf(claim,"{\"sub\":\"%s\",\"iat\":%ld,\"exp\":%ld}",(char*)serial_num,(char*)time_iat,(char*)time_exp);   //Generate claim
-    base64_url((uint8_t*)buffer + index, sizeof(buffer) - index, &c64_len, (uint8_t*)claim, strlen(claim)); //OK
-    Serial.printf("output2: %s\r\n", buffer);
-    
+    sprintf(claim,"{\"sub\":\"%s\",\"iat\":%ld,\"exp\":%ld}",(char*)serial_num,(char*)time_iat,(char*)time_exp);   //Generate claim base64_url
+    err_ret = base64_url((uint8_t*)buffer + index, sizeof(buffer) - index, &c64_len, (uint8_t*)claim, strlen(claim)); 
+    if(err_ret) return err_ret;    
     
     index += c64_len;
     uint8_t hash[32];
-    int ret = mbedtls_sha256_ret((uint8_t*)buffer, index, hash, NULL);                                      //Generate HASH SHA256
-
+    err_ret = mbedtls_sha256_ret((uint8_t*)buffer, index, hash, NULL);                                      //Generate HASH SHA256
+    if(err_ret) return err_ret;
+    
     buffer[index] = '.';
     index++;
 
     uint8_t signature[64];
-    ret = ecdsa_sign(signature, sizeof(signature), hash, 32, private_key);
-    Serial.printf("Sign ret: %d\r\n", ret);
+    err_ret = ecdsa_sign(signature, sizeof(signature), hash, 32, private_key);
+    if(err_ret) return err_ret;
 
-    base64_url((uint8_t*)buffer + index, sizeof(buffer) - index, &s64_len, signature, 64);                   //Completize JWT Token
-    Serial.printf("output: %s\r\n", buffer);
+    err_ret = base64_url((uint8_t*)buffer + index, sizeof(buffer) - index, &s64_len, signature, 64);                   //Completize JWT Token
+    if(err_ret) return err_ret;
 
     char bearer_token[250];                                                                                 //Make Bearer Token
     sprintf(bearer_token,"%s%s","Bearer ", (char*)buffer);

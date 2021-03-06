@@ -2,7 +2,7 @@
 #define CREDENTIALS_H
 
 const char private_key[] = 
-"ADD PRIVATE KEY
+"ADD PRIVATE KEY";
 
 
 char* kid = "KID";
